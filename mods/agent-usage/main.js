@@ -1,4 +1,4 @@
-﻿// Custom workspace status bar with compact [Icon] [Progress Bar] X% indicators,
+// Custom workspace status bar with compact [Icon] [Progress Bar] X% indicators,
 // anchored single-provider OAuth Usage Popover (Claude Code, Codex, Antigravity),
 // and Codex rate-limit reset credit redemption.
 import { View, div, svg, image } from "gpui-kit";
@@ -449,7 +449,7 @@ export default class MyWorkspaceStatus extends View {
     cx.spawn(async (cx) => {
       try {
         await consumeCodexResetCredit(h, nextCredit?.id ?? null);
-        this.resetNotice = { ok: true, text: "??Reset credit redeemed! Refreshing limits?? };
+        this.resetNotice = { ok: true, text: "✓ Reset credit redeemed! Refreshing limits…" };
         cx.notify();
         const updatedCodex = await fetchCodexUsage(h);
         const cur = this.state();
@@ -459,7 +459,7 @@ export default class MyWorkspaceStatus extends View {
           codexErr: null,
           updatedAt: Date.now(),
         });
-        this.resetNotice = { ok: true, text: "??Rate limits reset successfully!" };
+        this.resetNotice = { ok: true, text: "✓ Rate limits reset successfully!" };
       } catch (e) {
         const msg = String(e?.message ?? e).trim();
         this.resetNotice = { ok: false, text: `Reset not applied: ${msg}` };
@@ -474,7 +474,7 @@ export default class MyWorkspaceStatus extends View {
   // binding the hint stays useful ("commands") instead of lying.
   hint() {
     const mac = window()?.platform === "macos";
-    const mod = { cmd: mac ? "?? : "Ctrl+", ctrl: mac ? "?? : "Ctrl+", shift: mac ? "?? : "Shift+", alt: mac ? "?? : "Alt+", option: mac ? "?? : "Alt+" };
+    const mod = { cmd: mac ? "⌘" : "Ctrl+", ctrl: mac ? "⌃" : "Ctrl+", shift: mac ? "⇧" : "Shift+", alt: mac ? "⌥" : "Alt+", option: mac ? "⌥" : "Alt+" };
     const b = keys().find((k) => k.section === "global" && k.action === "app.palette");
     const parts = b && b.keys.endsWith("--") ? [...b.keys.slice(0, -2).split("-"), "-"] : b?.keys.split("-");
     const key = parts && parts.map((p) => mod[p.toLowerCase()] ?? p.toUpperCase()).join("");
@@ -553,7 +553,7 @@ export default class MyWorkspaceStatus extends View {
       .rounded(5)
       .items_center()
       .cursor_pointer()
-      .tooltip(`${name} OAuth Usage 繚 Click for details`)
+      .tooltip(`${name} OAuth Usage · Click for details`)
       .hover((s) => s.bg(t.hover))
       .on_mouse_down("left", (e, cx) => {
         cx.stop_propagation();
@@ -566,7 +566,7 @@ export default class MyWorkspaceStatus extends View {
           .child(div().text_size(11.5).text_color(this.pctColor(p5, t)).child(`${p5}%`)),
       )
       .when(!usage && Boolean(err), (el) => el.child(div().text_size(11).text_color(t.blocked).child("err")))
-      .when(!usage && !err, (el) => el.child(div().text_size(11).text_color(t.dim).child("??)));
+      .when(!usage && !err, (el) => el.child(div().text_size(11).text_color(t.dim).child("…")));
   }
 
   renderWindowRow(label, pct, resetMs, provider, t) {
@@ -583,7 +583,7 @@ export default class MyWorkspaceStatus extends View {
               .text_size(12.5)
               .font_semibold()
               .text_color(hasPct ? (pct >= 75 ? this.pctColor(pct, t) : t.foreground) : t.dim)
-              .child(hasPct ? `${pct}%` : "??),
+              .child(hasPct ? `${pct}%` : "—"),
           ),
       )
       .child(this.progressBar(pct ?? 0, POP_BAR_W, 7, provider, t))
@@ -595,7 +595,7 @@ export default class MyWorkspaceStatus extends View {
   renderCodexCreditsSection(usage, t) {
     const count = usage.resetCredits ?? 0;
     const nextExpMs = usage.creditItems?.[0]?.expiresAtMs ?? null;
-    const expHint = nextExpMs ? ` 繚 next exp. ${fmtShortDate(nextExpMs)}` : "";
+    const expHint = nextExpMs ? ` · next exp. ${fmtShortDate(nextExpMs)}` : "";
 
     return v_flex()
       .gap(6)
@@ -696,7 +696,7 @@ export default class MyWorkspaceStatus extends View {
             .gap(6)
             .items_center()
             .child(svg("mods/workspace-chrome/spinner.svg").size(12).text_color(t.working).spin(900))
-            .child(div().text_size(11).text_color(t.dim).child("Redeeming reset credit??)),
+            .child(div().text_size(11).text_color(t.dim).child("Redeeming reset credit…")),
         ),
       )
       .when(Boolean(this.resetNotice), (el) =>
@@ -821,7 +821,7 @@ export default class MyWorkspaceStatus extends View {
         el.child(div().py(8).text_size(12).text_color(t.blocked).child(`Failed to load OAuth usage: ${err}`)),
       )
       .when(!usage && !err, (el) =>
-        el.child(div().py(8).text_size(12).text_color(t.muted).child("Fetching OAuth usage??)),
+        el.child(div().py(8).text_size(12).text_color(t.muted).child("Fetching OAuth usage…")),
       )
       .when(Boolean(updatedStr), (el) =>
         el.child(
@@ -867,7 +867,7 @@ export default class MyWorkspaceStatus extends View {
           .items_center()
           .child(div().size(6).rounded(3).bg(t.dim))
           .child(`${list.length} agents`)
-          .when(needs > 0, (el) => el.child(div().text_color(t.blocked).child(`繚 ${needs} needs you`))),
+          .when(needs > 0, (el) => el.child(div().text_color(t.blocked).child(`· ${needs} needs you`))),
       )
       .child(div().flex_1())
       .when(Boolean(claudeEl) || Boolean(codexEl) || Boolean(agyEl), (el) =>
@@ -883,4 +883,3 @@ export default class MyWorkspaceStatus extends View {
       .child(div().id("palette").cursor_pointer().text_color(t.dim).hover((s) => s.text_color(t.muted)).on_click(() => run("app.palette")).child(this.hint()));
   }
 }
-
